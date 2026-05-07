@@ -1,18 +1,21 @@
-# ChaosMonkey — AI Security & Architecture Platform
+# Greenlit — Build Safe with AI
 
-> **Upload your repo. Understand what you built. Fix security flaws with one click.**
+> **Paste your GitHub repo. Get a plain-English audit, security check, and 1-click fix in 60 seconds. The always-on safety net for AI-built apps.**
 
-ChaosMonkey is an AI-powered platform designed for **vibe coders** and non-technical founders. It uses Retrieval-Augmented Generation (RAG) to deeply analyze your GitHub repository — mapping out the architecture, finding security vulnerabilities, and explaining everything in plain English.
+Greenlit is the trust layer for vibe coders and non-technical founders shipping with Lovable, Bolt, v0, Antigravity, Cursor, and Replit Agent. It uses RAG (HuggingFace embeddings + ChromaDB + Gemini) to map your architecture, find vulnerabilities, triage what actually matters, and fix the criticals with one click.
+
+> **Note**: The repository folders are still named `chaosmonkey-backend/` and `chaosmonkey-frontend/` from the project's prior identity. The folder rename is a separate git-submodule migration step (see Sprint 1 checklist).
 
 ---
 
 ## Features
 
-- **GitHub OAuth Login** — Connect your GitHub account and import repositories with one click.
-- **RAG-Powered Analysis** — Uses local HuggingFace embeddings + ChromaDB to index your codebase, then queries Google Gemini to generate a full security & architecture report.
-- **Plain English Explanations** — The "Vibe Coder" mode explains your tech stack and architecture in simple, non-technical language.
-- **Auto-Fix Engine** — Generates code patches and opens Pull Requests to fix detected vulnerabilities automatically.
-- **Cinematic Dark Glass UI** — A premium Bento Grid dashboard with GSAP animations and glassmorphism design.
+- **Plain-English audit** — Toggle between Simple mode (10-year-old-friendly, consequence-driven) and Technical mode.
+- **RAG-powered analysis** — Local HuggingFace embeddings + ChromaDB index your codebase, then Gemini 2.5 Pro generates a 10-key report.
+- **Triage that respects your time** — We surface what's broken AND what we ignored (and why), so you don't drown in noise.
+- **Auto-Fix PRs** — One click opens a real GitHub PR fixing the criticals (real PR creation lands in Sprint 5).
+- **Continuous monitoring** *(Sprint 4+)* — GitHub App webhook re-scans on every push.
+- **Greenlit badge** *(Sprint 8)* — Public score + README badge for social proof.
 
 ---
 
@@ -22,9 +25,14 @@ ChaosMonkey is an AI-powered platform designed for **vibe coders** and non-techn
 |-------|-----------|
 | Frontend | Next.js 16, Tailwind CSS 4, GSAP, Lucide Icons |
 | Backend | Python FastAPI, LangChain, ChromaDB |
-| LLM | Google Gemini 2.5 Pro (Free Tier) |
-| Embeddings | HuggingFace `all-MiniLM-L6-v2` (Local, Free) |
-| Auth | GitHub OAuth 2.0 |
+| LLM (audit) | Google Gemini 2.5 Pro |
+| LLM (monitoring re-scans, Sprint 6+) | Anthropic Claude Haiku 4.5 |
+| Embeddings | HuggingFace `all-MiniLM-L6-v2` (local, free) |
+| Auth | GitHub OAuth 2.0 → GitHub App (Sprint 4) |
+| DB (Sprint 2+) | Supabase Postgres |
+| Queue (Sprint 2+) | Upstash Redis |
+| Hosting | Oracle Cloud Free Tier (backend) + Vercel (frontend) |
+| Payments (Sprint 7+) | Stripe + Razorpay (India) |
 
 ---
 
@@ -32,7 +40,7 @@ ChaosMonkey is an AI-powered platform designed for **vibe coders** and non-techn
 
 ```
 agent_ops/
-├── chaosmonkey-backend/          # FastAPI Backend
+├── chaosmonkey-backend/          # FastAPI Backend (folder rename pending)
 │   ├── app/
 │   │   ├── api/repos.py          # REST endpoints (clone, analyze, autofix, jobs)
 │   │   ├── auth/github.py        # GitHub OAuth login/callback
@@ -46,7 +54,7 @@ agent_ops/
 │   ├── .env.example              # Required environment variables
 │   └── requirements.txt          # Python dependencies
 │
-├── chaosmonkey-frontend/         # Next.js Frontend
+├── chaosmonkey-frontend/         # Next.js Frontend (folder rename pending)
 │   ├── app/
 │   │   ├── page.tsx              # Landing page
 │   │   ├── dashboard/page.tsx    # Repository dashboard
@@ -114,6 +122,9 @@ Visit **http://localhost:3000** and click **"Get Started Free"** to begin.
 ## Environment Variables
 
 ### Backend (`chaosmonkey-backend/.env`)
+
+**Sprint 1 (current — what you need today):**
+
 | Variable | Required | Description |
 |----------|----------|-------------|
 | `GITHUB_CLIENT_ID` | ✅ | From your GitHub OAuth App |
@@ -121,6 +132,19 @@ Visit **http://localhost:3000** and click **"Get Started Free"** to begin.
 | `JWT_SECRET` | ✅ | Any random string for session signing |
 | `GEMINI_API_KEY` | ✅ | Free key from [aistudio.google.com](https://aistudio.google.com/apikey) |
 | `GITHUB_TOKEN` | ❌ | Optional — for Auto-Fix PR creation |
+
+**Future sprints (don't fill yet, scaffolded in `.env.example`):**
+
+| Variable | Sprint | Description |
+|----------|--------|-------------|
+| `SUPABASE_URL`, `SUPABASE_KEY` | 2 | Postgres for users/repos/audits |
+| `UPSTASH_REDIS_URL` | 2 | Job queue + dedup cache |
+| `ANTHROPIC_API_KEY` | 6 | Claude Haiku 4.5 for monitoring scans |
+| `RESEND_API_KEY` | 10 | Email digests + alerts |
+| `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` | 7 | Payments (US/EU) |
+| `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET` | 7 | Payments (India) |
+| `R2_ACCOUNT_ID`, `R2_ACCESS_KEY`, `R2_SECRET_KEY` | 8 | Cloudflare R2 for report blobs |
+| `GITHUB_APP_ID`, `GITHUB_APP_PRIVATE_KEY` | 4 | GitHub App for webhooks |
 
 ### Frontend (`chaosmonkey-frontend/.env.local`)
 | Variable | Required | Description |
@@ -134,12 +158,11 @@ Visit **http://localhost:3000** and click **"Get Started Free"** to begin.
 ## User Flow
 
 1. **Landing Page** → Click "Get Started Free"
-2. **GitHub OAuth** → Authorize the app
-3. **Dashboard** → See all your repositories, search/filter, import repos
-4. **Import** → Click "Import" to clone a repo to the backend
-5. **Analyze** → Click the Play button to start RAG analysis
-6. **Results** → View health score, architecture diagram, vulnerabilities
-7. **Auto-Fix** → Click "Generate Fixes" to create a PR with patches
+2. **Paste GitHub URL** → No signup needed for first audit
+3. **Live progress** → "Cloning... Reading... Checking... Writing report..."
+4. **Report** → Health score, plain-English explanation, vulnerabilities, ignored issues, fix suggestions
+5. **Connect GitHub** → For 1-click auto-fix (Sprint 5)
+6. **Enable monitoring** *(Sprint 4)* → Every push triggers a re-scan + email alert
 
 ---
 
